@@ -21,12 +21,13 @@ public class MainActivity extends AppCompatActivity {
         mVB = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mVB.getRoot());
 
-        FirebaseMessaging.getInstance().subscribeToTopic("test");
+        FirebaseMessaging.getInstance().subscribeToTopic("offline");
 
         VollyRequest vollyRequest = new VollyRequest(this);
         mVB.sendUsingVolly.setOnClickListener(v -> {
             Log.d(TAG,"sending request to FCM");
-            vollyRequest.sendFCMNotification();
+            //vollyRequest.sendFCMNotification();
+            new RetrofitRequest(this).sendFCMNotificationByRetrofit();
         });
     }
 

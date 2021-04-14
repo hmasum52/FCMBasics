@@ -1,11 +1,12 @@
 package com.hmasum18.fcmbasics.api;
 
-import android.content.Context;
 import android.util.Log;
 
-import com.google.gson.JsonArray;
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+
+import java.lang.reflect.Type;
+import java.util.Map;
 
 import okhttp3.Request;
 import retrofit2.Call;
@@ -16,119 +17,84 @@ import retrofit2.Response;
  * This class fetch data from the remote server as json object or json array
  *
  * It calls api end point for data by retrofit2
- * and notify the repositories when data is received.
+ * and call OnCompleteListeners when data is received.
  *
  * @author Hasan Masum
  * @version 1.0
  * @since 21/01/2021
  */
-public class JsonApiCaller<T extends JsonElement> implements ObjectCallable<T>, ArrayCallable<T>,ObjectPostable<T> {
+public class JsonApiCaller<T>{
     public static final String TAG = "JsonApiCaller:-->";
-    public static final String BASE_URL = "https://fcm.googleapis.com/fcm/send";
-    private String authToken = null;
-    private final FCMEndPoint FCMEndPoint; //api endpoints
-    private OnCallSuccessListener<T> onCallSuccessListener;
-    private Context context;
+    private final JsonApiEndPoints apiEndPoints; //api endpoints
+    private OnCompleteListener<T> onCompleteListener;
+    private Gson gson = new Gson();
+    private Type type;
 
-    public JsonApiCaller(Context context){
-        this.context = context;
-        FCMEndPoint = FCMEndPointService.getInstance(BASE_URL).getFCMEndPoint();
-        //authToken = CacheManager.getCachedData(context, AuthRepository.AUTH_TOKEN_CACHE_FILE_NAME);
-        //Log.d(TAG, " JsonApiCaller(): "+authToken);
+    public JsonApiCaller(Type type, String baseUrl){
+        this.type = type;
+        apiEndPoints = ApiService.getInstance(baseUrl).getJsonApiEndPoints();
     }
-    @Override
-    public void setOnCallSuccessListener(OnCallSuccessListener<T> onCallSuccessListener) {
-        this.onCallSuccessListener = onCallSuccessListener;
+    public void addOnCompleteListener(OnCompleteListener<T> onCompleteListener) {
+        this.onCompleteListener = onCompleteListener;
     }
 
-    @Override
-    public void callForArray(String relativePath){
-        if(authToken == null) {
-            Log.d(TAG, " JsonApiCaller(): "+authToken);
-            Log.d(TAG," auth token is null. user is not authenticated.");
-            return;
-        }
-        Call<JsonArray> call = FCMEndPoint.callForJsonArray(authToken,relativePath);
-        Request request = call.request();
-        Log.d(TAG,"callForArray>method: "+request.method());
-        Log.d(TAG,"callForArray>url: "+request.url());
-       // Log.d(TAG,"callForArray>headers: "+request.headers());
-        call.enqueue(new Callback<JsonArray>() {
-            @Override
-            public void onResponse(Call<JsonArray> call, Response<JsonArray> response) {
-                if(response.isSuccessful()){
-                    JsonArray jsonArray = response.body();
-                    Log.d(TAG,"callForArray>onResponse: yahoo. process is successful");
-                    onCallSuccessListener.onSuccess((T) jsonArray);
-                }else{
-                    Log.d(TAG,"callForArray>onResponse:  process is not successful "+response.code());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<JsonArray> call, Throwable t) {
-                String className = t.getClass().toString();
-                if(className.endsWith("UnknownHostException") )
-                    Log.d(TAG,"Server is not responding");
-                else if(className.endsWith("JsonSyntaxException"))
-                    Log.d(TAG,"Response is not a com.google.gson.JsonArray");
-                t.printStackTrace();
-            }
-        });
+    public JsonApiCaller<T> GET(String relativePath){
+        Call<JsonElement> call = apiEndPoints.GET(relativePath);
+        this.enqueueRequest(call);
+        return this;
     }
 
-    @Override
-    public void callForObject(String relativePath){
-        if(authToken ==null) {
-            Log.d(TAG," auth token is null. user is not authenticated.");
-            return;
-        }
-        Call<JsonObject> call = FCMEndPoint.callForJsonObject(authToken,relativePath);
-        this.enqueueObjectCall(call);
+    public JsonApiCaller<T> GET(Map<String,String> headerMap, String relativePath){
+        Call<JsonElement> call = apiEndPoints.GET(headerMap,relativePath);
+        this.enqueueRequest(call);
+        return this;
     }
 
-    @Override
-    public void callToPostObject(String relativePath, JsonObject object) {
-        Call<JsonObject> call;
-        if(object.has("id_token")){
-            Log.d(TAG, "callToPostObject()=> auth call ");
-            call = FCMEndPoint.postJsonObject(relativePath, object);
-        }
-        else {
-            Log.d(TAG, "callToPostObject()=> not auth call ");
-            call = FCMEndPoint.postJsonObject(authToken, relativePath, object);
-        }
-        this.enqueueObjectCall(call);
+    public JsonApiCaller<T> POST(String relativePath, Object object) {
+        Call<JsonElement> call = apiEndPoints.POST(relativePath, object);
+        Log.d(TAG, "POST()=> posting json element ");
+        this.enqueueRequest(call);
+        return this;
     }
 
-    private void enqueueObjectCall(Call<JsonObject> call){
+    public JsonApiCaller<T> POST(Map<String,String> headerMap,String relativePath, Object object) {
+        Call<JsonElement> call = apiEndPoints.POST(headerMap,relativePath, object);
+        Log.d(TAG, "POST()=> posting json element ");
+        this.enqueueRequest(call);
+        return this;
+    }
+
+    private void enqueueRequest(Call<JsonElement> call){
         //for debugging
         //start
         Request request = call.request();
-        Log.d(TAG,"callForObject>method: "+request.method());
-        Log.d(TAG,"callForObject>url: "+request.url());
-       // Log.d(TAG,"callForObject>headers: "+request.headers());
+        Log.d(TAG,"enqueueRequest>method: "+request.method());
+        Log.d(TAG,"enqueueRequest>url: "+request.url());
+        Log.d(TAG,"enqueueRequest>headers: "+request.headers());
        // Log.d(TAG,"callForObject>body: "+request.body());
         //end
-        call.enqueue(new Callback<JsonObject>() {
+
+        call.enqueue(new Callback<JsonElement>() {
             @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
                 if(response.isSuccessful()){
-                    JsonObject jsonObject = response.body();
-                    Log.d(TAG,"callForObject>onResponse: yahoo. process is successful");
-                    onCallSuccessListener.onSuccess((T) jsonObject);
+                    JsonElement json = response.body();
+                    Log.d(TAG,"enqueueRequest>onResponse: "+call.request().url()+" call is successful");
+                    onCompleteListener.onSuccess(gson.fromJson(json,type));
                 }else{
-                    Log.d(TAG,"callForObject>onResponse:  process is not successful "+response.code());
+                    onCompleteListener.onFailure(new Exception("Error "+response.code()));
+                    Log.d(TAG,"enqueueRequest>onResponse:  process is not successful "+response.code());
                 }
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
+            public void onFailure(Call<JsonElement> call, Throwable t) {
                 String className = t.getClass().toString();
+                onCompleteListener.onFailure(new Exception(t));
                 if(className.endsWith("UnknownHostException") )
-                    Log.d(TAG,"callForObject>Server is not responding");
+                    Log.d(TAG,"enqueueRequest>Server is not responding");
                 else if(className.endsWith("JsonSyntaxException"))
-                    Log.d(TAG,"callForObject>Response is not a com.google.gson.JsonArray");
+                    Log.d(TAG,"enqueueRequest>Response is not a com.google.gson.JsonArray");
                 t.printStackTrace();
             }
         });

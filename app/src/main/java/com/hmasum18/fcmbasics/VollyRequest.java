@@ -20,6 +20,7 @@ import java.util.Map;
 public class VollyRequest {
     public static final String TAG="VollyRequest";
     public static final String BASE_URL = "https://fcm.googleapis.com/fcm/send";
+    public static final String KEY = "AAAAAOJHYwA:APA91bHGSc-f-w7KY6RiML6lJS6o9JqMWACuCjmhWeSmmqCL0nm5llHF6vx1wX9vMLLuj2pEZOZ-7GfozNsrdIqtuGMIIafjQrIgSrRlTaQAzwgoQLVa59IpHl7L7A1mCOYi9UUUnS6r";
     private RequestQueue requestQueue;
     public VollyRequest(Context context){
         requestQueue = Volley.newRequestQueue(context);
@@ -28,11 +29,20 @@ public class VollyRequest {
     public void sendFCMNotification() {
         try {
             JSONObject mainObj = new JSONObject();
-            mainObj.put("to", "/topics/test");
+            mainObj.put("to", "/topics/offline");
+
+            //build a notification
             JSONObject notification = new JSONObject();
-            notification.put("title","Test");
-            notification.put("body","Hello from FCM");
+            notification.put("title","CSE203 DSA-Offline 6");
+            notification.put("body","Offline on graph. Deadline 23 April");
             mainObj.put("notification",notification);
+
+            //send extra data
+            JSONObject data = new JSONObject();
+            data.put("course","CSE203");
+            data.put("offline",5);
+            data.put("offline_title","Graph Traversal");
+            mainObj.put("data",data);
 
             //make a volly json object request
             JsonObjectRequest request = new JsonObjectRequest(
@@ -48,7 +58,7 @@ public class VollyRequest {
                     new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-
+                            Log.d(TAG,"notification was not sent");
                         }
                     }
             ){
@@ -56,7 +66,7 @@ public class VollyRequest {
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String,String> header = new HashMap<>();
                     header.put("content-type","application/json");
-                    header.put("authorization","key=AAAAAOJHYwA:APA91bHGSc-f-w7KY6RiML6lJS6o9JqMWACuCjmhWeSmmqCL0nm5llHF6vx1wX9vMLLuj2pEZOZ-7GfozNsrdIqtuGMIIafjQrIgSrRlTaQAzwgoQLVa59IpHl7L7A1mCOYi9UUUnS6r");
+                    header.put("authorization","key="+KEY);
                     return header;
                 }
             };
