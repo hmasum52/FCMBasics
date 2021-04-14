@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "3796329216",
+    "project_id": "fcmbasics-dd543",
+    "storage_bucket": "fcmbasics-dd543.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:3796329216:android:d57921a69fe6c8c4bfc9e5",
+        "android_client_info": {
+          "package_name": "com.hmasum18.fcmbasics"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "3796329216-v9vr8rtghf4m54o8e3fja7272bood8ka.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCT1eNCVVinQImt-4sIv8yk0D03wOuam94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "3796329216-v9vr8rtghf4m54o8e3fja7272bood8ka.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
